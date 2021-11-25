@@ -1,8 +1,9 @@
+import './sass/main.scss';
+import './js/components/scrollUpBtn';
+
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import SimpleLightbox from 'simplelightbox';
-
 import 'simplelightbox/dist/simple-lightbox.min.css';
-import './sass/main.scss';
 
 import ImagesApiService from './js/services/api-service';
 import BtnService from './js/components/interactive-btn';
@@ -17,11 +18,10 @@ const loadMoreBtn = new BtnService({
   hidden: true,
 });
 
-let gallery = {};
+let gallery = null;
 
 const searchImages = async e => {
   e.preventDefault();
-  if (!e.target.tagName === 'BUTTON') return;
 
   imagesApiService.resetPage();
 
@@ -44,10 +44,11 @@ const searchImages = async e => {
     Notify.success(`Hooray! We found ${total} images.`);
 
     renderMarkup(hits);
-    loadMoreBtn.show();
-    gallery = new SimpleLightbox('.gallery a');
 
+    loadMoreBtn.show();
     checkLastPage(total, imagesApiService.page);
+
+    gallery = new SimpleLightbox('.gallery a');
   } catch (error) {
     Notify.failure(error.message);
     cleanMarkup();
@@ -60,9 +61,13 @@ const loadMoreImg = async () => {
   try {
     const { hits, total } = await imagesApiService.fetchImages();
     renderMarkup(hits);
-    gallery.refresh();
+
+    scrollDown();
+
     loadMoreBtn.enable();
     checkLastPage(total, imagesApiService.page);
+
+    gallery.refresh();
   } catch (error) {
     Notify.failure(error.message);
     cleanMarkup();
@@ -88,3 +93,14 @@ const checkLastPage = (totalImages, page) => {
 
 formRef.addEventListener('submit', searchImages);
 loadMoreBtn.refs.button.addEventListener('click', loadMoreImg);
+
+const scrollDown = () => {
+  const { height: cardHeight } = document
+    .querySelector('.gallery')
+    .firstElementChild.getBoundingClientRect();
+
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: 'smooth',
+  });
+};
